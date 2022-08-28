@@ -5,6 +5,7 @@ using SlackProfile.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace SlackProfile
         public const string SCOPE                = "users.profile:read" + " " + "users.profile:write";
         public const string TOKEN_FILE_NAME      = "token.txt";
         public const string TEMP_STATE_FILE_NAME = "slackProfileTemp.txt";
+        public const string EXE_FILE_NAME = "SlackProfile.exe";
 
         static void Main(string[] args)
         {
@@ -41,7 +43,7 @@ namespace SlackProfile
             }
 
             //작업스케줄러 확인
-            //RegisterTaskScheduler();
+            RegisterTaskScheduler();
 #warning 이곳에서 작업스케줄러 등록 / 켜졌을때+잠금해제될때
 
             //준비
@@ -99,6 +101,37 @@ namespace SlackProfile
             Logger.WriteLine("--------------------------------------------------------");
 
             return;
+        }
+
+        /// <summary>
+        /// 작업스케줄러 등록
+        /// </summary>
+        private static void RegisterTaskScheduler()
+        {
+            using (Microsoft.Win32.TaskScheduler.TaskService ts = new Microsoft.Win32.TaskScheduler.TaskService())
+            {
+                var slackProfileTask = ts.GetTask("SlackProfile");
+                if (slackProfileTask == null)
+                {
+                    return;
+                }
+
+                var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+
+                Microsoft.Win32.TaskScheduler.TaskDefinition td = ts.NewTask();
+                td.RegistrationInfo.Description = "Slack Profile";
+
+                //트리거
+                td.Triggers.Add(new Microsoft.Win32.TaskScheduler.LogonTrigger { UserId = userName });
+                td.Triggers.Add(new Microsoft.Win32.TaskScheduler.SessionStateChangeTrigger { StateChange = Microsoft.Win32.TaskScheduler.TaskSessionStateChangeType.SessionUnlock, UserId = userName });
+
+                //실행
+                var exeFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, EXE_FILE_NAME);
+                td.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(exeFilePath));
+
+                //등록
+                ts.RootFolder.RegisterTaskDefinition("SlackProfile", td, Microsoft.Win32.TaskScheduler.TaskCreation.CreateOrUpdate, userId: userName, password: null, logonType: Microsoft.Win32.TaskScheduler.TaskLogonType.InteractiveToken);
+            }
         }
 
         /// <summary>
