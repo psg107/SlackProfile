@@ -5,14 +5,14 @@ namespace SlackProfile.Helpers
 {
     public static class Logger
     {
-        public static string LogDirectory = "logs";
-        public static string LogPath => Path.Combine(LogDirectory, $"{DateTime.Now.ToString("yyyyMMdd")}.txt");
+        private readonly static string logDirectory = "logs";
+        private readonly static string logPath = Path.Combine(logDirectory, $"{DateTime.Now.ToString("yyyyMMdd")}.txt");
         
         public static void WriteLine(string message)
         {
-            Directory.CreateDirectory(LogDirectory);
+            Directory.CreateDirectory(logDirectory);
 
-            File.AppendAllText(LogPath, $"[{DateTime.Now.ToString("HH:mm:ss")}] {message}\n");
+            File.AppendAllText(logPath, $"[{DateTime.Now.ToString("HH:mm:ss")}] {message}\n");
         }
     }
 }
