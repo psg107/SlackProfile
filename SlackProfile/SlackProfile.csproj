@@ -118,6 +118,15 @@
   <PropertyGroup>
     <PostBuildEvent>mkdir lib
 del *.xml
-move "$(TargetDir)*.dll" "$(TargetDir)lib"</PostBuildEvent>
+move "$(TargetDir)*.dll" "$(TargetDir)lib"
+
+rmdir /s /q de
+rmdir /s /q es
+rmdir /s /q fr
+rmdir /s /q it
+rmdir /s /q pl
+rmdir /s /q ru
+rmdir /s /q zh-CN
+rmdir /s /q zh-Hant</PostBuildEvent>
   </PropertyGroup>
 </Project>
