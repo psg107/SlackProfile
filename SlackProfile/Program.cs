@@ -1,11 +1,11 @@
-﻿using SlackProfile.Helpers;
+﻿using DeviceId;
+using SlackProfile.Helpers;
 using SlackProfile.Items.SetUsersProfile.Request;
 using SlackProfile.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -109,33 +109,21 @@ namespace SlackProfile
                 return token;
             }
 
-            //로컬에 토큰이 없으나 서버에 존재하는 경우
-            var tempStateFileName = Path.Combine(Path.GetTempPath(), TEMP_STATE_FILE_NAME);
-            if (File.Exists(tempStateFileName))
+            //로컬에 토큰이 없으나 서버에는 있는 경우
+            var deviceId = new DeviceIdBuilder().AddMachineName().AddMacAddress().AddUserName().ToString();
+            var downloadToken = await new HttpClient().GetStringAsync($"https://nowwaitingsearch.azurewebsites.net/oauth/token?state={deviceId}");
+            if (!string.IsNullOrWhiteSpace(downloadToken))
             {
-                var state = File.ReadAllText(tempStateFileName, Encoding.UTF8);
-                File.Delete(tempStateFileName);
-
-                var downloadToken = await new HttpClient().GetStringAsync($"https://nowwaitingsearch.azurewebsites.net/oauth/token?state={state}");
-                if (!string.IsNullOrWhiteSpace(downloadToken))
-                {
-                    File.WriteAllText(TOKEN_FILE_NAME, downloadToken);
-                    return downloadToken;
-                }
+                File.WriteAllText(TOKEN_FILE_NAME, downloadToken);
+                return downloadToken;
             }
 
-            //로컬에 토큰이 없으며 서버에도 없는 경우
-            var guid = Guid.NewGuid().ToString();
-            var url = $"https://slack.com/oauth/authorize?client_id={CLIENT_ID}&scope={SCOPE}&state={guid}";
-
-            File.WriteAllText(tempStateFileName, guid, Encoding.UTF8);
+            //로컬/서버에 토큰이 없는 경우 생성
             MessageBox.Show("" +
-                    "프로필 변경을 하기 위해서는 슬랙 로그인이 필요합니다.\n" +
-                    "슬랙 로그인 후 화면에 나타나는 토큰을 token.txt에 붙여넣기 후 프로그램을 다시 실행하세요.\n" +
-                    "\n" +
-                    "확인을 누르면 로그인 페이지로 이동합니다.");
+                "프로필 변경을 하기 위해서는 슬랙 로그인이 필요합니다.\n" +
+                "확인을 누르면 로그인 페이지로 이동합니다.");
 
-            Process.Start(url);
+            Process.Start($"https://slack.com/oauth/authorize?client_id={CLIENT_ID}&scope={SCOPE}&state={deviceId}");
             return string.Empty;
         }
     }
