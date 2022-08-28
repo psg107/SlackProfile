@@ -14,9 +14,9 @@ namespace SlackProfile
 {
     class Program
     {
-        public const string CLIENT_ID = "3507541088166.3969218284066";
-        public const string SCOPE = "users.profile:read" + " " + "users.profile:write";
-        public const string TOKEN_FILE_NAME = "token.txt";
+        public const string CLIENT_ID            = "3507541088166.3969218284066";
+        public const string SCOPE                = "users.profile:read" + " " + "users.profile:write";
+        public const string TOKEN_FILE_NAME      = "token.txt";
         public const string TEMP_STATE_FILE_NAME = "slackProfileTemp.txt";
 
         static void Main(string[] args)
@@ -39,6 +39,7 @@ namespace SlackProfile
             }
 
             //작업스케줄러 확인
+            //RegisterTaskScheduler();
 #warning 이곳에서 작업스케줄러 등록 / 켜졌을때+잠금해제될때
 
             //준비
