@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SlackProfile.Helpers
 {
-    public static class RequestHelper
+    public static class HttpContentHelper
     {
         /// <summary>
         /// 

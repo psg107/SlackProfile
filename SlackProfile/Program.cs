@@ -100,7 +100,7 @@ namespace SlackProfile
         /// 토큰 가져오기
         /// </summary>
         /// <returns></returns>
-        public static async Task<string> GetToken(string tokenFilePath)
+        private static async Task<string> GetToken(string tokenFilePath)
         {
             //로컬에 토큰이 있는 경우
             var token = File.ReadAllText(tokenFilePath).Trim();
@@ -121,7 +121,7 @@ namespace SlackProfile
             //로컬/서버에 토큰이 없는 경우 생성
             MessageBox.Show("" +
                 "프로필 변경을 하기 위해서는 슬랙 로그인이 필요합니다.\n" +
-                "확인을 누르면 로그인 페이지로 이동합니다.");
+                "확인을 누르면 로그인 페이지로 이동합니다.", "SlackProfile");
 
             Process.Start($"https://slack.com/oauth/authorize?client_id={CLIENT_ID}&scope={SCOPE}&state={deviceId}");
             return string.Empty;

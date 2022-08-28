@@ -20,6 +20,7 @@ namespace SlackProfile.Services
         }
 
         /// <summary>
+        /// 프로필 가져오기 <para/>
         /// https://api.slack.com/methods/users.profile.get
         /// </summary>
         /// <param name="profile"></param>
@@ -33,6 +34,7 @@ namespace SlackProfile.Services
         }
 
         /// <summary>
+        /// 프로필 변경하기 <para/>
         /// https://api.slack.com/methods/users.profile.set
         /// </summary>
         /// <param name="profile"></param>

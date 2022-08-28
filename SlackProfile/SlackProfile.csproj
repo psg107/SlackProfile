@@ -84,7 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\DateTimeHelper.cs" />
-    <Compile Include="Helpers\RequestHelper.cs" />
+    <Compile Include="Helpers\HttpContentHelper.cs" />
     <Compile Include="Items\GetUserProfile\Response\GetUserProfileResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -109,4 +109,9 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>mkdir lib
+del *.xml
+move "$(TargetDir)*.dll" "$(TargetDir)lib"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
