@@ -3,6 +3,7 @@ using SlackProfile.Helpers;
 using SlackProfile.Items.SetUsersProfile.Request;
 using SlackProfile.Services;
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -20,6 +21,10 @@ namespace SlackProfile
         public const string TOKEN_FILE_NAME      = "token.txt";
         public const string TEMP_STATE_FILE_NAME = "slackProfileTemp.txt";
         public const string EXE_FILE_NAME = "SlackProfile.exe";
+        public const string TOKEN_KEY = "Token";
+        public const string DEVICE_KEY = "DeviceId";
+
+        public static readonly Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
 
         static void Main(string[] args)
         {
@@ -140,21 +145,33 @@ namespace SlackProfile
         /// <returns></returns>
         private static async Task<string> GetToken(string tokenFilePath)
         {
-            //로컬에 토큰이 있는 경우
-            var token = File.ReadAllText(tokenFilePath).Trim();
-            if (token.StartsWith("xoxp-"))
+            var savedDeviceId = config.AppSettings.Settings[DEVICE_KEY]?.Value;
+            var deviceId = new DeviceIdBuilder().AddMachineName().AddMacAddress().AddUserName().ToString();
+
+            //저장된 디바이스 정보가 없거나 다른 경우
+            if (savedDeviceId == null && savedDeviceId != deviceId)
             {
-                Logger.WriteLine($"token.txt 토큰 확인");
+                config.AppSettings.Settings.Remove(TOKEN_KEY);
+                config.AppSettings.Settings.Remove(DEVICE_KEY);
+                config.AppSettings.Settings.Add(DEVICE_KEY, deviceId);
+                config.Save(ConfigurationSaveMode.Minimal);
+            }
+
+            //로컬에 토큰이 있는 경우
+            var token = config.AppSettings.Settings[TOKEN_KEY]?.Value;
+            if (!string.IsNullOrEmpty(token) && token.StartsWith("xoxp-"))
+            {
+                Logger.WriteLine("토큰 확인");
                 return token;
             }
 
             //로컬에 토큰이 없으나 서버에는 있는 경우
-            var deviceId = new DeviceIdBuilder().AddMachineName().AddMacAddress().AddUserName().ToString();
             var downloadToken = await new HttpClient().GetStringAsync($"https://nowwaitingsearch.azurewebsites.net/oauth/token?state={deviceId}");
             if (!string.IsNullOrWhiteSpace(downloadToken))
             {
                 Logger.WriteLine($"토큰 다운로드");
-                File.WriteAllText(TOKEN_FILE_NAME, downloadToken);
+                config.AppSettings.Settings.Add(TOKEN_KEY, downloadToken);
+                config.Save(ConfigurationSaveMode.Minimal);
                 return downloadToken;
             }
 
