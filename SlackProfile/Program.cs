@@ -49,7 +49,6 @@ namespace SlackProfile
 
             //작업스케줄러 확인
             RegisterTaskScheduler();
-#warning 이곳에서 작업스케줄러 등록 / 켜졌을때+잠금해제될때
 
             //준비
             var isRemoteSession = SystemInformation.TerminalServerSession;
@@ -116,7 +115,7 @@ namespace SlackProfile
             using (Microsoft.Win32.TaskScheduler.TaskService ts = new Microsoft.Win32.TaskScheduler.TaskService())
             {
                 var slackProfileTask = ts.GetTask("SlackProfile");
-                if (slackProfileTask == null)
+                if (slackProfileTask != null)
                 {
                     return;
                 }
@@ -131,8 +130,8 @@ namespace SlackProfile
                 td.Triggers.Add(new Microsoft.Win32.TaskScheduler.SessionStateChangeTrigger { StateChange = Microsoft.Win32.TaskScheduler.TaskSessionStateChangeType.SessionUnlock, UserId = userName });
 
                 //실행
-                var exeFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, EXE_FILE_NAME);
-                td.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(exeFilePath));
+                var exeFilePath = EXE_FILE_NAME;
+                td.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(exeFilePath, arguments: null, workingDirectory: AppDomain.CurrentDomain.BaseDirectory));
 
                 //등록
                 ts.RootFolder.RegisterTaskDefinition("SlackProfile", td, Microsoft.Win32.TaskScheduler.TaskCreation.CreateOrUpdate, userId: userName, password: null, logonType: Microsoft.Win32.TaskScheduler.TaskLogonType.InteractiveToken);
