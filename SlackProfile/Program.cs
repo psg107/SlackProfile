@@ -30,6 +30,8 @@ namespace SlackProfile
         /// <returns></returns>
         public static async Task Run()
         {
+            Logger.WriteLine($"시작");
+
             //토큰 확인
             var tokenFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TOKEN_FILE_NAME);
             var token = await GetToken(tokenFilePath);
@@ -48,6 +50,8 @@ namespace SlackProfile
             
             //기존 프로필 확인
             var userProfile = await slackAPI.GetUsersProfileAsync();
+            Logger.WriteLine($"원격세션: {isRemoteSession}");
+            Logger.WriteLine($"변경 전: RealName:'{userProfile.Profile.RealName}' / StatusText:'{userProfile.Profile.StatusText}' / StatusEmoji:'{userProfile.Profile.StatusEmoji}' StatusExpiration:'{userProfile.Profile.StatusExpiration}'");
 
             //변경 프로필 생성
             var profile = new Profile
@@ -89,9 +93,10 @@ namespace SlackProfile
             //프로필 변경
             var response = await slackAPI.SetUsersProfileAsync(profile);
 
-            //출력
-            //Console.WriteLine($"name: {response.Profile.RealName} / isRemoteSession: {isRemoteSession}");
-            //await Task.Delay(2000);
+            //로깅
+            Logger.WriteLine($"변경 후: RealName:'{profile.RealName}' / StatusText:'{profile.StatusText}' / StatusEmoji:'{profile.StatusEmoji}' StatusExpiration:'{profile.StatusExpiration}'");
+            Logger.WriteLine("종료");
+            Logger.WriteLine("--------------------------------------------------------");
 
             return;
         }
@@ -106,6 +111,7 @@ namespace SlackProfile
             var token = File.ReadAllText(tokenFilePath).Trim();
             if (token.StartsWith("xoxp-"))
             {
+                Logger.WriteLine($"token.txt 토큰 확인");
                 return token;
             }
 
@@ -114,11 +120,13 @@ namespace SlackProfile
             var downloadToken = await new HttpClient().GetStringAsync($"https://nowwaitingsearch.azurewebsites.net/oauth/token?state={deviceId}");
             if (!string.IsNullOrWhiteSpace(downloadToken))
             {
+                Logger.WriteLine($"토큰 다운로드");
                 File.WriteAllText(TOKEN_FILE_NAME, downloadToken);
                 return downloadToken;
             }
 
             //로컬/서버에 토큰이 없는 경우 생성
+            Logger.WriteLine($"로그인");
             MessageBox.Show("" +
                 "프로필 변경을 하기 위해서는 슬랙 로그인이 필요합니다.\n" +
                 "확인을 누르면 로그인 페이지로 이동합니다.", "SlackProfile");

@@ -85,6 +85,7 @@
   <ItemGroup>
     <Compile Include="Helpers\DateTimeHelper.cs" />
     <Compile Include="Helpers\HttpContentHelper.cs" />
+    <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Items\GetUserProfile\Response\GetUserProfileResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
