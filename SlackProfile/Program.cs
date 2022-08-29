@@ -154,8 +154,10 @@ namespace SlackProfile
             var deviceId = new DeviceIdBuilder().AddMachineName().AddMacAddress().AddUserName().ToString();
 
             //저장된 디바이스 정보가 없거나 다른 경우
-            if (savedDeviceId == null && savedDeviceId != deviceId)
+            if (savedDeviceId == null || savedDeviceId != deviceId)
             {
+                savedDeviceId = deviceId;
+
                 config.AppSettings.Settings.Remove(TOKEN_KEY);
                 config.AppSettings.Settings.Remove(DEVICE_KEY);
                 config.AppSettings.Settings.Add(DEVICE_KEY, deviceId);
@@ -164,7 +166,7 @@ namespace SlackProfile
 
             //로컬에 토큰이 있는 경우
             var token = config.AppSettings.Settings[TOKEN_KEY]?.Value;
-            if (!string.IsNullOrEmpty(token) && token.StartsWith("xoxp-"))
+            if (token?.StartsWith("xoxp-") == true)
             {
                 Logger.WriteLine("토큰 확인");
                 return token;
