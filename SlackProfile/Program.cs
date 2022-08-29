@@ -20,9 +20,9 @@ namespace SlackProfile
         public const string SCOPE                = "users.profile:read" + " " + "users.profile:write";
         public const string TOKEN_FILE_NAME      = "token.txt";
         public const string TEMP_STATE_FILE_NAME = "slackProfileTemp.txt";
-        public const string EXE_FILE_NAME = "SlackProfile.exe";
-        public const string TOKEN_KEY = "Token";
-        public const string DEVICE_KEY = "DeviceId";
+        public const string EXE_FILE_NAME        = "SlackProfile.exe";
+        public const string TOKEN_KEY            = "Token";
+        public const string DEVICE_KEY           = "DeviceId";
 
         public static readonly Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
 
@@ -117,6 +117,12 @@ namespace SlackProfile
                 var slackProfileTask = ts.GetTask("SlackProfile");
                 if (slackProfileTask != null)
                 {
+                    var executeAction = slackProfileTask.Definition.Actions.Where(x => x.GetType() == typeof(Microsoft.Win32.TaskScheduler.ExecAction)).FirstOrDefault() as Microsoft.Win32.TaskScheduler.ExecAction;
+                    if (executeAction.WorkingDirectory != AppDomain.CurrentDomain.BaseDirectory)
+                    {
+                        executeAction.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                    }
+                    slackProfileTask.RegisterChanges();
                     return;
                 }
 
