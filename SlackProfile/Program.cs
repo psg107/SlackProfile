@@ -28,6 +28,13 @@ namespace SlackProfile
 
         static void Main(string[] args)
         {
+            System.AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                var exception = e.ExceptionObject as Exception;
+
+                Logger.WriteLine($"[UnhandledException] {exception.ToString()}");
+            };
+
             Run().GetAwaiter().GetResult();
         }
 
