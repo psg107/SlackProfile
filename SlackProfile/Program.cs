@@ -19,10 +19,10 @@ namespace SlackProfile
         public const string CLIENT_ID            = "3507541088166.3969218284066";
         public const string SCOPE                = "users.profile:read" + " " + "users.profile:write";
         public const string TOKEN_FILE_NAME      = "token.txt";
-        public const string TEMP_STATE_FILE_NAME = "slackProfileTemp.txt";
         public const string EXE_FILE_NAME        = "SlackProfile.exe";
         public const string TOKEN_KEY            = "Token";
         public const string DEVICE_KEY           = "DeviceId";
+        public const string TASK_SCHEDULER_PATH  = "SlackProfile";
 
         public static readonly Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
 
@@ -121,15 +121,29 @@ namespace SlackProfile
         {
             using (Microsoft.Win32.TaskScheduler.TaskService ts = new Microsoft.Win32.TaskScheduler.TaskService())
             {
-                var slackProfileTask = ts.GetTask("SlackProfile");
+                var slackProfileTask = ts.GetTask(TASK_SCHEDULER_PATH);
+
+                //이미 작업스케줄러가 존재하는 경우
                 if (slackProfileTask != null)
                 {
                     var executeAction = slackProfileTask.Definition.Actions.Where(x => x.GetType() == typeof(Microsoft.Win32.TaskScheduler.ExecAction)).FirstOrDefault() as Microsoft.Win32.TaskScheduler.ExecAction;
+
+                    //동작이 없으면 추가
+                    if (executeAction == null)
+                    {
+                        slackProfileTask.Definition.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(EXE_FILE_NAME, arguments: null, workingDirectory: AppDomain.CurrentDomain.BaseDirectory));
+                        slackProfileTask.RegisterChanges();
+                        return;
+                    }
+
+                    //시작위치가 다르면 변경
                     if (executeAction.WorkingDirectory != AppDomain.CurrentDomain.BaseDirectory)
                     {
                         executeAction.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                        slackProfileTask.RegisterChanges();
+                        return;
                     }
-                    slackProfileTask.RegisterChanges();
+
                     return;
                 }
 
@@ -143,11 +157,10 @@ namespace SlackProfile
                 td.Triggers.Add(new Microsoft.Win32.TaskScheduler.SessionStateChangeTrigger { StateChange = Microsoft.Win32.TaskScheduler.TaskSessionStateChangeType.SessionUnlock, UserId = userName });
 
                 //실행
-                var exeFilePath = EXE_FILE_NAME;
-                td.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(exeFilePath, arguments: null, workingDirectory: AppDomain.CurrentDomain.BaseDirectory));
+                td.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(EXE_FILE_NAME, arguments: null, workingDirectory: AppDomain.CurrentDomain.BaseDirectory));
 
                 //등록
-                ts.RootFolder.RegisterTaskDefinition("SlackProfile", td, Microsoft.Win32.TaskScheduler.TaskCreation.CreateOrUpdate, userId: userName, password: null, logonType: Microsoft.Win32.TaskScheduler.TaskLogonType.InteractiveToken);
+                ts.RootFolder.RegisterTaskDefinition(TASK_SCHEDULER_PATH, td, Microsoft.Win32.TaskScheduler.TaskCreation.CreateOrUpdate, userId: userName, password: null, logonType: Microsoft.Win32.TaskScheduler.TaskLogonType.InteractiveToken);
             }
         }
 
