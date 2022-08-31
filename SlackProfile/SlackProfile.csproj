@@ -95,6 +95,7 @@
     <Compile Include="Items\GetUserProfile\Response\GetUserProfileResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RetryHandler.cs" />
     <Compile Include="Services\SlackAPI.cs" />
     <Compile Include="Items\SetUsersProfile\Request\SetUserProfileRequest.cs" />
     <Compile Include="Items\SetUsersProfile\Response\SetUserProfileResponse.cs" />

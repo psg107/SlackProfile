@@ -15,7 +15,7 @@ namespace SlackProfile.Services
 
         public SlackAPI(string token)
         {
-            this.client = new HttpClient();
+            this.client = new HttpClient(new RetryHandler(new HttpClientHandler()));
             this.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
