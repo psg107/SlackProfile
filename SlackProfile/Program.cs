@@ -1,13 +1,16 @@
 ﻿using DeviceId;
+using NativeWifi;
 using SlackProfile.Helpers;
 using SlackProfile.Items.SetUsersProfile.Request;
 using SlackProfile.Services;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,13 +19,13 @@ namespace SlackProfile
 {
     class Program
     {
-        public const string CLIENT_ID            = "3507541088166.3969218284066";
-        public const string SCOPE                = "users.profile:read" + " " + "users.profile:write";
-        public const string TOKEN_FILE_NAME      = "token.txt";
-        public const string EXE_FILE_NAME        = "SlackProfile.exe";
-        public const string TOKEN_KEY            = "Token";
-        public const string DEVICE_KEY           = "DeviceId";
-        public const string TASK_SCHEDULER_PATH  = "SlackProfile";
+        public const string CLIENT_ID           = "3507541088166.3969218284066";
+        public const string SCOPE               = "users.profile:read" + " " + "users.profile:write";
+        public const string TOKEN_FILE_NAME     = "token.txt";
+        public const string EXE_FILE_NAME       = "SlackProfile.exe";
+        public const string TOKEN_KEY           = "Token";
+        public const string DEVICE_KEY          = "DeviceId";
+        public const string TASK_SCHEDULER_PATH = "SlackProfile";
 
         public static readonly Configuration config = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
 
@@ -46,6 +49,8 @@ namespace SlackProfile
         {
             Logger.WriteLine($"시작");
 
+            var homeSSIDNames = config.AppSettings.Settings["HOME_SSID_NAMES"].Value.Split(';');
+
             //토큰 확인
             var tokenFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TOKEN_FILE_NAME);
             var token = await GetToken(tokenFilePath);
@@ -58,9 +63,9 @@ namespace SlackProfile
             RegisterTaskScheduler();
 
             //준비
-            var isRemoteSession = SystemInformation.TerminalServerSession;
+            var isRemoteSession = IsRemote(homeSSIDNames);
             var slackAPI = new SlackAPI(token);
-            
+
             //기존 프로필 확인
             var userProfile = await slackAPI.GetUsersProfileAsync();
             Logger.WriteLine($"원격세션: {isRemoteSession}");
@@ -99,10 +104,10 @@ namespace SlackProfile
                     return name;
                 }).Invoke(),
                 StatusText = isRemoteSession ? "재택근무 중" : string.Empty,
-                StatusEmoji = isRemoteSession ? ":house_with_garden:" : string.Empty,
+                StatusEmoji = isRemoteSession ? ":정원이_있는_집:" : string.Empty,
                 StatusExpiration = isRemoteSession ? DateTimeHelper.GetTodayEndUnixTimestamp() : 0
             };
-            
+
             //프로필 변경
             var response = await slackAPI.SetUsersProfileAsync(profile);
 
@@ -210,6 +215,74 @@ namespace SlackProfile
 
             Process.Start($"https://slack.com/oauth/authorize?client_id={CLIENT_ID}&scope={SCOPE}&state={deviceId}");
             return string.Empty;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        private static bool IsRemote(IEnumerable<string> homeSSIDNames)
+        {
+            var isRemoteSession = SystemInformation.TerminalServerSession;
+            if (isRemoteSession)
+            {
+                return true;
+            }
+
+            var connectedSSIDs = GetConnectedSSIDs();
+            var availableSSIDs = GetAvailableSSIDs();
+
+            if (connectedSSIDs.Any(x => homeSSIDNames.Contains(x)))
+            {
+                return true;
+            }
+            if (availableSSIDs.Any(x => homeSSIDNames.Contains(x)))
+            {
+                return true;
+            }
+            return false;
+        }
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        private static List<string> GetConnectedSSIDs()
+        {
+            List<string> connectedSsids = new List<string>();
+
+            WlanClient client = new WlanClient();
+            foreach (WlanClient.WlanInterface wlanInterface in client.Interfaces)
+            {
+                Wlan.Dot11Ssid ssid = wlanInterface.CurrentConnection.wlanAssociationAttributes.dot11Ssid;
+                connectedSsids.Add(new string(Encoding.ASCII.GetChars(ssid.SSID, 0, (int)ssid.SSIDLength)));
+            }
+
+            return connectedSsids;
+        }
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        private static List<string> GetAvailableSSIDs()
+        {
+            List<string> availableSsids = new List<string>();
+
+            WlanClient client = new WlanClient();
+            foreach (WlanClient.WlanInterface wlanInterface in client.Interfaces)
+            {
+                Wlan.WlanAvailableNetwork[] networks = wlanInterface.GetAvailableNetworkList(0);
+                foreach (Wlan.WlanAvailableNetwork network in networks)
+                {
+                    Wlan.Dot11Ssid ssid = network.dot11Ssid;
+                    string networkname = Encoding.ASCII.GetString(ssid.SSID, 0, (int)ssid.SSIDLength);
+                    if (!string.IsNullOrEmpty(networkname))
+                    {
+                        availableSsids.Add(networkname.ToString());
+                    }
+                }
+            }
+
+            return availableSsids;
         }
     }
 }
