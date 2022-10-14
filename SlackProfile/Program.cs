@@ -104,7 +104,7 @@ namespace SlackProfile
                     return name;
                 }).Invoke(),
                 StatusText = isRemoteSession ? "재택근무 중" : string.Empty,
-                StatusEmoji = isRemoteSession ? ":정원이_있는_집:" : string.Empty,
+                StatusEmoji = isRemoteSession ? ":house_with_garden:" : string.Empty,
                 StatusExpiration = isRemoteSession ? DateTimeHelper.GetTodayEndUnixTimestamp() : 0
             };
 
@@ -112,6 +112,7 @@ namespace SlackProfile
             var response = await slackAPI.SetUsersProfileAsync(profile);
 
             //로깅
+            Logger.WriteLine($"{(response.Ok ? "성공" : $"실패")}");
             Logger.WriteLine($"변경 후: RealName:'{profile.RealName}' / StatusText:'{profile.StatusText}' / StatusEmoji:'{profile.StatusEmoji}' StatusExpiration:'{profile.StatusExpiration}'");
             Logger.WriteLine("종료");
             Logger.WriteLine("--------------------------------------------------------");
